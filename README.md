@@ -28,6 +28,47 @@ reveal and export it as a Lottie file".
 Every project the server returns includes an `editor_url` — a deep link that opens the project in
 the SVGator editor, so you can always continue by hand where the assistant left off.
 
+## Tools
+
+The server exposes 22 tools. See the [Tools reference](tools.md) for full parameter and output
+tables.
+
+**Projects**
+
+- **`list_projects`** — List the authenticated user's SVGator projects (newest first), with an `editor_url` deep link per row and a total count for pagination.
+- **`get_project`** — Get a single project summary: title, preview, folder, timestamps, canvas size, background colour, animation timeline, and saved export settings.
+- **`create_project`** — Create a new SVGator project from a full project JSON, owned by the authenticated user.
+- **`replace_project`** — Replace an existing project's entire JSON with a supplied full project (validation runs before any mutation).
+- **`duplicate_project`** — Make a copy of an existing project, optionally into a different folder or under a new title.
+- **`move_project`** — Move a project to a different folder and/or rename it.
+
+**Inspecting & editing a project**
+
+- **`get_skeleton`** — Get a cheap, token-light structure map of a project (element tree with names and keyframe counts only, never values) — step 1 of the editing loop.
+- **`read_part`** — Read the exact value or element at an id-anchored path — step 2 of the editing loop.
+- **`edit_part`** — Apply one validated edit (update, insert, move, or delete) at a path and persist it — step 3 of the editing loop.
+- **`describe_shape`** — Get the exact JSON shape of one building block (element or animator) before authoring, so field names are never guessed.
+
+**Assets**
+
+- **`list_assets`** — List the authenticated user's reusable assets (static or animated SVG items), newest first.
+- **`get_asset`** — Get a single asset including its full `data` ({document, definitions}) payload.
+- **`create_asset`** — Create a new reusable asset from an asset document.
+- **`update_asset`** — Replace an existing asset's entire document.
+
+**Folders**
+
+- **`list_folders`** — List the authenticated user's folders (the labels projects are filed under).
+- **`get_folder`** — Get a single folder (id, title, timestamps) by its id.
+- **`create_folder`** — Create a new folder to organize projects.
+- **`update_folder`** — Rename an existing folder.
+
+**Export & account**
+
+- **`export_project`** — Export a project to a deliverable format (SVG, Lottie, React Native, Flutter, video, or GIF), with optional per-export overrides.
+- **`get_render`** — Poll the status of a raster (video/GIF) render started by `export_project` and get the signed download URL when done.
+- **`get_profile`** — Get the authenticated customer profile: name, email, plan, and teams.
+
 ## Documentation map
 
 | Document | For | Covers |
