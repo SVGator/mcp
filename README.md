@@ -1,9 +1,9 @@
 # SVGator MCP Server — Documentation
 
-The SVGator MCP server connects AI assistants to [SVGator](https://www.svgator.com), the online
-SVG animation tool. Once connected, an assistant can **browse, inspect, edit, create, and export**
-your SVGator projects on your behalf — from "list my projects" to "build me an animated logo
-reveal and export it as a Lottie file".
+The MCP server connects your AI assistant straight to [SVGator](https://www.svgator.com), the online SVG animation tool. 
+From there, your assistant can work inside your projects to **browse, inspect, edit, create, and export** them for you, 
+handling everything from a simple “edit colors according to this brand kit” to a complete 
+“build me an animated logo reveal and export it as a CSS-only file.”
 
 - **Endpoint:** `https://mcp.svgator.com/mcp`
 - **Protocol:** [Model Context Protocol](https://modelcontextprotocol.io) over Streamable HTTP
@@ -95,3 +95,99 @@ login. Your SVGator credentials stay **server-side only** — the AI model never
 token or secret key; it only receives the tool results (project lists, structure maps, exported
 files). Tool inputs are validated against published schemas, and invalid requests return
 descriptive errors the assistant can read and correct.
+
+
+## ⚙️ Capabilities
+
+The MCP server turns SVGator into something you can drive with plain language. Instead of
+clicking through the editor, you describe what you want and your AI assistant does it: pulling up
+a project, changing a color, animating a logo, or exporting a finished file.
+
+It's built for designers who want an assistant to handle the repetitive parts of animating, for
+marketing teams who need web-ready animations without waiting on a designer for every small
+change, and for developers who want production-ready exports (Lottie, React Native, Flutter, or
+SVG) that drop straight into a product. Every project comes back with a direct editor link, so you
+can always open it and finish by hand, saving tokens.
+
+Here's what your assistant can do once it's connected:
+
+### 🗂️ Projects and Assets
+
+- List projects: newest first, each with a direct editor link
+- Search and page through large libraries
+- Read project settings: canvas size, background, timeline, and export settings
+- Create a project from a full definition
+- Overwrite an existing project
+- Duplicate a project: into the same or another folder
+- Move or rename a project
+- Organize projects into folders
+- Manage reusable assets: list, read, create, and update
+
+### 🔍 Structure and Inspection
+
+- Map a project's structure: element tree with keyframe counts, no heavy data
+- See what's animated: which channels carry keyframes on each element
+- Read exact values: any property, keyframe, or element
+- Look up authoring shapes: the exact JSON for any element or concept
+
+### 🔷 Shapes and Elements
+
+- Rectangles
+- Circles and ellipses
+- Lines, polylines, and polygons
+- Custom paths
+- Text and multi-line text
+- Images
+- Reused symbols and instances
+- Groups
+- Masks and clip paths
+
+### 🎨 Fills, Strokes, and Color
+
+- Solid color fills: static or animated
+- Gradient fills
+- Strokes: solid or gradient, static or animated
+- Compositing: blend modes and opacity
+- Filter effects such as blur
+
+### 🎞️ Animation and Keyframes
+
+- Add keyframes at specific times, with values
+- Set static values where no motion is needed
+- Read, inspect, and remove keyframes
+- Set easing per keyframe: cubic bezier
+- Animate transforms: position, rotation, scale, and skew
+- Animate fill, stroke, compositing, and filter channels
+- Morph one shape into another
+
+### 📤 Export and Delivery
+
+- Export animated SVG: driven by JavaScript or CSS
+- Set a start trigger: load, hover, click, scroll, or programmatic
+- Set click and hover behavior: freeze, restart, reverse, or reset
+- Export to Lottie
+- Export to React Native or Flutter source
+- Render video: MP4, MOV, AVI, MKV, or WebM
+- Render GIF, WebP, PNG sequence, or ZIP
+- Control looping: iterations, direction, ping-pong, and speed
+- Set frame rate, resolution, and quality
+- Handle transparency and background color
+
+### ✅ Best practices
+
+**Install the SVGator motion design skill**, then call it by name: It is craft guidance that helps your assistant make deliberate choices about timing, easing, and personality instead of flat, generic motion. Download it from the [SVGator skills repository](https://github.com/SVGator/skills), then trigger it right in your prompt by starting with something like "use SVGator motion skills to animate this logo." You call it manually on purpose: that way the skill stays out of your token usage when you are only exporting or making small edits, and loads only when you actually want the extra art direction.
+
+**Start from your own artwork, then animate:** Generating original shapes from scratch is the hardest thing to get right in any AI assistant. For the best results, build or bring in your SVG in SVGator’s editor first, then ask your assistant to animate it. That keeps your visual style consistent and lets the AI focus on what it does best: motion, timing, and sequencing.
+
+**Name your elements before you prompt:** Your assistant reads element names to understand a project’s structure. Clear names like “left_arm”, “bg_circle”, or “headline” help it target the right element, avoid mistakes, and stay organized across complex scenes. Generic names make its job harder, and might end up costing you more tokens (depending on model .
+
+**Break complex animations into steps:** Instead of “build me a full onboarding animation,” go one piece at a time: create the elements, add keyframes, then refine the timing. The server applies one validated change per edit, so smaller steps give you more control and make any mistake easy to catch and correct.
+
+**Be specific about timing and feel:** “A smooth fade” is on the vague side. “A 400ms fade-in with ease-out” gives your assistant something concrete to work with. The more you describe the feel, whether snappy, bouncy, slow, or subtle, the closer the first result lands to what you had in mind.
+
+**Match the export format to where it will live:** SVG is the right pick for the web, with your choice of JavaScript or CSS-only (for even better performance). Lottie, React Native, and Flutter hand off cleanly to app and mobile projects. Video and GIF are ready for social and email, where an animated SVG will not play. Choosing the format up front saves a round of re-exporting.
+
+**Duplicate a project before big experiments:** If you want the AI to rebuild something from the ground up, ask it to duplicate the project first, then make the changes on the copy. The original stays exactly as it was, so a bold experiment never costs you the working version.
+
+**Finish in the editor:** Every project comes back with a direct editor link. Once the assistant gets you most of the way there, open the project and handle the final polish by hand. The AI does the heavy lifting, and you keep control of the details. It also saves tokens, since small tweaks by hand are quicker and cheaper than having the assistant make each one.
+

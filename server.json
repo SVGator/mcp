@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.svgator/mcp",
+  "description": "Browse, create, edit, and export SVGator animated SVG projects via your SVGator account.",
+  "repository": {
+    "url": "https://github.com/SVGator/mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.svgator.com/mcp"
+    }
+  ]
+}
