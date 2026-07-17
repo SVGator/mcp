@@ -173,7 +173,7 @@ Here's what your assistant can do once it's connected:
 - Set frame rate, resolution, and quality
 - Handle transparency and background color
 
-### ✅ Best practices
+## ✅ Best practices
 
 **Install the SVGator motion design skill**, then call it by name: It is craft guidance that helps your assistant make deliberate choices about timing, easing, and personality instead of flat, generic motion. Download it from the [SVGator skills repository](https://github.com/SVGator/skills), then trigger it right in your prompt by starting with something like "use SVGator motion skills to animate this logo." You call it manually on purpose: that way the skill stays out of your token usage when you are only exporting or making small edits, and loads only when you actually want the extra art direction.
 
