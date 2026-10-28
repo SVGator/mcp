@@ -15,6 +15,7 @@ so an assistant can read the constraint and retry with a corrected call.
 | [`ping`](#ping) | Connectivity diagnostic | none |
 | [`get_profile`](#get_profile) | Account name, email, plan, teams | required |
 | [`list_projects`](#list_projects) | List your projects | required |
+| [`list_templates`](#list_templates) | Search SVGator's ready-made animation templates | none |
 | [`get_project`](#get_project) | One project's summary + settings | required |
 | [`get_skeleton`](#get_skeleton) | Token-light structure map of a project | required |
 | [`read_part`](#read_part) | Read one element / property / value | required |
@@ -32,8 +33,13 @@ so an assistant can read the constraint and retry with a corrected call.
 | [`create_folder`](#create_folder) | Create a folder | required |
 | [`update_folder`](#update_folder) | Rename a folder | required |
 | [`describe_shape`](#describe_shape) | Authoring reference for one building block | none |
+| [`get_motion_skill`](#get_motion_skill) | Load a file of the motion-design craft skill | none |
 | [`export_project`](#export_project) | Export to svg / lottie / react-native / flutter / video / gif | required |
 | [`get_render`](#get_render) | Poll an async video/gif render job | required |
+
+**Auth = none** means the tool reads nothing from your SVGator account, so it works whether or not
+one is connected. The transport itself is always bearer-protected — every MCP request carries an
+`Authorization` header, these tools just don't need an account behind it.
 
 ---
 
@@ -86,6 +92,7 @@ pagination.
 | `offset` | integer ≥ 0 | no | Pagination offset |
 | `search` | string | no | Filter by title substring |
 | `team_id` | string | no | Restrict to a team (`tm_…`) |
+| `folder_id` | string | no | Restrict to one folder (`fd_…`, from [`list_folders`](#list_folders)). Omit to list your projects regardless of folder |
 
 **Output**
 
@@ -97,6 +104,58 @@ pagination.
 
 `editor_url` is a deep link that opens the project in the SVGator editor
 (`https://app.svgator.com/editor#/…`); it is `null` when a row has no id.
+
+`folder_id` must be a folder of yours. An unknown or foreign id is **rejected** with
+`Invalid folder ID specified` rather than quietly ignored — so an empty result always means "that
+folder is empty", never "the filter didn't apply". Selecting your demo folder (the one holding SVGator's sample projects) lists the demo
+projects as the dashboard does: your own copies and the untouched originals.
+
+This tool lists **your own** projects. For SVGator's ready-made animations, see
+[`list_templates`](#list_templates).
+
+---
+
+## `list_templates`
+
+Searches SVGator's library of **ready-made animation templates** — finished, professionally
+animated projects (loaders, icons, logos, UI elements, ad designs) to start from instead of
+animating from scratch. Public catalogue: it reads nothing from your account and works whether or
+not one is connected.
+
+> **A template is read-only for every account.** Call
+> [`duplicate_project`](#duplicate_project) with its id **first**; you then edit, export and share
+> the copy. `get_project`, `get_skeleton` and `read_part` accept a template id if you want to
+> inspect one before duplicating, and `export_project` accepts one when you want the template
+> exactly as it is. `edit_part` and `replace_project` on a template id are refused.
+
+**Inputs**
+
+| Parameter | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `search` | string | no | Space-separated terms, **all** of which must appear in a template's title, description, tags or author name (case-insensitive). Omit to browse the whole catalogue |
+| `limit` | integer 1–100 | no | Max templates to return (default 20) |
+| `offset` | integer ≥ 0 | no | Pagination offset |
+
+**Output**
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `templates` | array | Rows of `{ id, title, description, tags, size, author, preview }` |
+| `total` | number | Matching templates **before** pagination — page through with `limit`/`offset` |
+| `offset` | number | The offset this page starts at |
+| `next_step` | string | The duplicate-first rule above, restated in the result so an assistant can't miss it |
+
+Each row's `id` is a `pi_…` project id usable with the other tools; `tags` are coarse categories
+(Loaders, Icons, Logos, UI elements, Ad design, Assets, Misc); `size` is the canvas size in px;
+`author` is the credited author's name, absent for SVGator's own templates.
+
+`preview` carries CDN links to the rendered template — `{ svg, png, webp }`. **All three are
+animated**: the `svg` is the light one (single-digit KB to ~200 KB) and the right one to open or
+show; the `png` (an animated PNG) and `webp` run to several MB, so treat them as links to hand on
+rather than files to fetch.
+
+Because the catalogue is public, searching and paging happen inside the MCP server over a cached
+copy of it — repeat searches are instant, and nothing here touches your account or its limits.
 
 ---
 
@@ -219,6 +278,12 @@ edits are rejected with a descriptive validation error and nothing is persisted.
 - **`delete`** — removes an element (and its subtree), a whole animator channel
   (`…/animators/fill/paint`), or a single keyframe (`…/keys/<i>`).
 
+**Inserting or moving a `clipPath` / `mask`:** it belongs **inside the group that references it**,
+and a container may hold **at most one** of them. An insert or move that would leave two as direct
+siblings is rejected with reason `invalid_structure` — see
+[Editing projects](editing.md#clips-and-masks-one-per-container) and `describe_shape` for
+`clipPath` / `mask`.
+
 **Output**
 
 | Field | Type | Meaning |
@@ -254,6 +319,13 @@ before authoring.
 | `options` | object | no | Export/config. **Caution:** a stored project nests every format under `options.export.settings.<format>` — this is *not* the flattened single-format shape `export_project` takes; do not copy export parameters here |
 | `folder` | string \| null | no | Id of an existing folder (`fd_…`) to file the project under. `null` moves it out of any folder; omit to keep the current one (create defaults to no folder) |
 
+**Clips and masks:** a `clipPath` or `mask` goes **inside the group that references it**, and a
+container may hold **at most one** —
+`g{ compositing.clip.path: "X" } > [ clipPath#X, …content ]`. Two as direct siblings (two clips, or
+a clip and a mask) is rejected with `invalid_structure`; when one element needs both, nest two
+groups — outer carries the mask, inner the clip. See
+[Editing projects](editing.md#clips-and-masks-one-per-container).
+
 **Output:** the saved project metadata (same shape as [`get_project`](#get_project), including
 `editor_url`) — not the full project back.
 
@@ -267,7 +339,8 @@ but validation runs before any mutation, so a rejected replace leaves the stored
 untouched. When `title` is omitted the current title is kept.
 
 **Inputs:** `project_id` (required) plus the same `title` / `document` / `definitions` /
-`options` / `folder` as [`create_project`](#create_project).
+`options` / `folder` as [`create_project`](#create_project). The same clip/mask placement rule and
+the same `options` nesting caution apply.
 
 **Output:** the saved project metadata, including `editor_url`.
 
@@ -279,6 +352,11 @@ Makes a **copy** of an existing project, owned by the authenticated user. Server
 preserves the full document and its image references without downloading the project. The copy
 keeps the source title unless you pass `title`, and is filed in the **same folder** as the source
 unless you pass `folder_id`. Duplicating into the same folder is allowed.
+
+This is also **the required first step on a template** from
+[`list_templates`](#list_templates) — templates are read-only for everyone. A copy of a template
+lands in **no folder** unless you name one (the template's own folder belongs to SVGator and is
+never inherited), and is a normal project you can then edit, export and share.
 
 **Inputs**
 
@@ -497,6 +575,39 @@ Element types: `svg`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`
 
 The full catalog behind this tool is also published as a single MCP resource,
 `svgator://reference/element-shapes` — see [Skill & resources](skill-and-resources.md).
+
+---
+
+## `get_motion_skill`
+
+Loads one file of the **svgator-motion-design** craft skill — the design, motion and interaction
+direction that turns a technically valid animation into a deliberate one. Same content the server
+publishes as `skill://svgator-motion-design/…` resources; this tool exists for clients that don't
+let the model read MCP resources (notably Claude Desktop). Reference content only.
+
+**Inputs**
+
+| Parameter | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `path` | string | no | Skill file relative to the skill root, e.g. `design/color.md`, `director/motion-personality.md`. Omit for `SKILL.md`. An unknown path returns the manifest instead of an error |
+
+**Output**
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `path` | string | The file actually served |
+| `content` | string | The file's markdown |
+| `available` | array | The loadable files as `{ path, title, description }` — returned with `SKILL.md` and whenever the path is unknown |
+| `note` | string | Present when the requested path didn't exist |
+
+Call it **bare first**: that returns `SKILL.md` (the router) plus the manifest, so one call both
+primes the model and shows what else is loadable. Then follow `SKILL.md`'s links on demand for the
+piece at hand — there are 24 files and loading them all is a waste of context.
+
+The same 24 files are public and browsable at
+[github.com/SVGator/skills](https://github.com/SVGator/skills), where they can also be installed as
+a local skill. See [Skill & resources](skill-and-resources.md) for the full file map and for the
+other ways the skill is delivered.
 
 ---
 

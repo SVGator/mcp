@@ -14,7 +14,8 @@ handling everything from a simple “edit colors according to this brand kit” 
 
 | Capability | Tools | Example prompt |
 | --- | --- | --- |
-| Browse your projects | `list_projects`, `get_project`, `get_profile` | "List my SVGator projects" |
+| Browse your projects | `list_projects`, `get_project`, `get_profile` | "List my SVGator projects" / "…the ones in my Icons folder" |
+| Start from a ready-made template | `list_templates`, `duplicate_project` | "Find me a SVGator template for a loading spinner and copy it into my account" |
 | Inspect a project's structure | `get_skeleton`, `read_part` | "What elements are in project X, and which are animated?" |
 | Edit a project incrementally | `edit_part` | "Make the circle red and loop its bounce forever" |
 | Create or replace whole projects | `create_project`, `replace_project` | "Build me a new animated loading spinner" |
@@ -23,19 +24,20 @@ handling everything from a simple “edit colors according to this brand kit” 
 | Organize projects into folders | `list_folders`, `get_folder`, `create_folder`, `update_folder` | "Make a 'Marketing' folder and file this project under it" |
 | Look up authoring reference | `describe_shape` | (used by the assistant to get exact JSON shapes) |
 | Export to deliverable formats | `export_project`, `get_render` | "Export project X as an MP4 video" |
-| Get motion-design craft guidance | skill resources + prompt | "Art-direct a logo reveal, then build it" |
+| Get motion-design craft guidance | skill resources + prompt, `get_motion_skill` | "Art-direct a logo reveal, then build it" |
 
 Every project the server returns includes an `editor_url` — a deep link that opens the project in
 the SVGator editor, so you can always continue by hand where the assistant left off.
 
 ## Tools
 
-The server exposes 22 tools. See the [Tools reference](tools.md) for full parameter and output
+The server exposes 24 tools. See the [Tools reference](tools.md) for full parameter and output
 tables.
 
 **Projects**
 
-- **`list_projects`** — List the authenticated user's SVGator projects (newest first), with an `editor_url` deep link per row and a total count for pagination.
+- **`list_projects`** — List the authenticated user's SVGator projects (newest first), with an `editor_url` deep link per row and a total count for pagination. Narrow it to one folder with `folder_id`.
+- **`list_templates`** — Search SVGator's library of ready-made animation templates (loaders, icons, logos, UI elements) to start from. Templates are read-only — duplicate one into your account first, then edit the copy.
 - **`get_project`** — Get a single project summary: title, preview, folder, timestamps, canvas size, background colour, animation timeline, and saved export settings.
 - **`create_project`** — Create a new SVGator project from a full project JSON, owned by the authenticated user.
 - **`replace_project`** — Replace an existing project's entire JSON with a supplied full project (validation runs before any mutation).
@@ -48,6 +50,7 @@ tables.
 - **`read_part`** — Read the exact value or element at an id-anchored path — step 2 of the editing loop.
 - **`edit_part`** — Apply one validated edit (update, insert, move, or delete) at a path and persist it — step 3 of the editing loop.
 - **`describe_shape`** — Get the exact JSON shape of one building block (element or animator) before authoring, so field names are never guessed.
+- **`get_motion_skill`** — Load a file of the motion-design craft skill, for clients that can't read MCP resources. Same files as the [SVGator skills repository](https://github.com/SVGator/skills).
 
 **Assets**
 
@@ -73,7 +76,7 @@ tables.
 
 | Document | For | Covers |
 | --- | --- | --- |
-| [Getting started](getting-started.md) | Everyone | Connecting from claude.ai, Claude Desktop, Claude Code, and other MCP clients; authentication; privacy |
+| [Getting started](getting-started.md) | Everyone | Step-by-step connection guides for Claude, Claude Code, ChatGPT, Gemini, Grok, Cursor, VS Code and any other MCP client; authentication; privacy |
 | [Tools reference](tools.md) | Integrators / the curious | Every tool with full parameter and output tables |
 | [Editing projects](editing.md) | Integrators / power users | The navigate → read → edit → verify loop, path addressing, authoring rules |
 | [Exporting projects](exporting.md) | Everyone | Formats, delivery modes, export options, render polling |
@@ -84,8 +87,11 @@ tables.
 
 - A **SVGator account** ([sign up](https://app.svgator.com)). Exports count against your plan's
   limits exactly as they do in the editor.
-- To connect from **claude.ai / Claude Desktop**, custom connectors require a Claude **Pro, Max,
-  Team, or Enterprise** plan. Claude Code and other MCP clients connect directly to the endpoint.
+- An MCP client that supports **remote Streamable HTTP** servers and browser OAuth — Claude,
+  Claude Code, ChatGPT, Gemini, Grok, Cursor, VS Code and others all qualify. On
+  **claude.ai / Claude Desktop** custom connectors require a Claude **Pro, Max, Team, or
+  Enterprise** plan; other clients may have their own plan requirements. See
+  [Getting started](getting-started.md) for per-client steps.
 
 ## How it works (one paragraph)
 
@@ -114,7 +120,8 @@ Here's what your assistant can do once it's connected:
 ### 🗂️ Projects and Assets
 
 - List projects: newest first, each with a direct editor link
-- Search and page through large libraries
+- Search and page through large libraries, or list a single folder
+- Browse SVGator's ready-made animation templates and copy one into your account to build on
 - Read project settings: canvas size, background, timeline, and export settings
 - Create a project from a full definition
 - Overwrite an existing project
@@ -178,6 +185,8 @@ Here's what your assistant can do once it's connected:
 **Install the SVGator motion design skill**, then call it by name: It is craft guidance that helps your assistant make deliberate choices about timing, easing, and personality instead of flat, generic motion. Download it from the [SVGator skills repository](https://github.com/SVGator/skills), then trigger it right in your prompt by starting with something like "use SVGator motion skills to animate this logo." You call it manually on purpose: that way the skill stays out of your token usage when you are only exporting or making small edits, and loads only when you actually want the extra art direction.
 
 **Start from your own artwork, then animate:** Generating original shapes from scratch is the hardest thing to get right in any AI assistant. For the best results, build or bring in your SVG in SVGator’s editor first, then ask your assistant to animate it. That keeps your visual style consistent and lets the AI focus on what it does best: motion, timing, and sequencing.
+
+**Or start from a template:** When what you need is a common piece — a loading spinner, an animated download icon, a logo reveal — ask your assistant to search SVGator’s templates instead of building from zero. The drawing and the motion are already done by a designer, and the assistant spends its effort adapting it to you: your colors, your timing, your copy. Templates are shared and read-only, so the first thing it does is duplicate one into your account; everything after that happens on your own project.
 
 **Name your elements before you prompt:** Your assistant reads element names to understand a project’s structure. Clear names like “left_arm”, “bg_circle”, or “headline” help it target the right element, avoid mistakes, and stay organized across complex scenes. Generic names make its job harder, and might end up costing you more tokens (depending on model .
 

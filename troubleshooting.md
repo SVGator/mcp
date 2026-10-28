@@ -59,9 +59,22 @@ The server validates before persisting anything, and the message says exactly wh
 coarse writes, remember the whole document validates as one unit — one wrong field fails the
 entire call.
 
-**"Read-only project" on `replace_project`.**
-Demo and template projects can't be overwritten. Clone the content into a new project with
-`create_project` instead.
+**"Read-only project" on `replace_project` / `edit_part`.**
+Demo and template projects can't be overwritten — they're shared, and writable by nobody. Call
+`duplicate_project` with the id to get your own copy, then edit that. This is the normal first step
+after [`list_templates`](tools.md#list_templates), not a workaround. Reading a template
+(`get_project`, `get_skeleton`, `read_part`) and exporting one as it is both work without
+duplicating.
+
+**`invalid_structure` when inserting or building a clip/mask.**
+A `clipPath` or `mask` belongs **inside** the group that references it, and a container may hold
+**at most one** — two as direct siblings is rejected. Nest two groups when one element needs both a
+clip and a mask. See
+[Clips and masks](editing.md#clips-and-masks-one-per-container).
+
+**"Invalid folder ID specified" on `list_projects`.**
+`folder_id` must be one of your own folders — call `list_folders` to get valid `fd_…` ids. The
+filter is refused rather than ignored on purpose, so an empty result never hides a dropped filter.
 
 **An inserted element can't be found afterwards.**
 The server assigns/remaps ids on insert. Address the new node via the `insertedItem` path (and

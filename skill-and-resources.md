@@ -5,7 +5,11 @@ interaction direction layered on top of the raw authoring tools — plus a struc
 resource. The goal: any MCP client gets an assistant that art-directs an animation (personality,
 timing, layering) instead of shipping generic drawings and raw, un-eased tweens.
 
-The skill is delivered through three standard MCP mechanisms, so it works in any client:
+The files are also public — browse or install them from
+[github.com/SVGator/skills](https://github.com/SVGator/skills), the same source this server serves
+from.
+
+The skill is delivered through four standard MCP mechanisms, so it works in any client:
 
 1. **Server `instructions`** — a compact router injected at `initialize`. It primes the model to
    apply craft when *designing, animating, or making something interactive*, and to ignore the
@@ -17,6 +21,9 @@ The skill is delivered through three standard MCP mechanisms, so it works in any
 3. **A prompt** — `svgator-motion-design`, an explicit entry point that returns the full skill
    brief (in Claude Code it appears as the `/svgator-motion-design` slash command). Optional
    argument `brief`: the animation request to art-direct, e.g. `"animate this logo reveal"`.
+4. **A tool** — [`get_motion_skill`](tools.md#get_motion_skill), serving the same files for clients
+   that don't expose resources to the model (notably Claude Desktop, which also drops the server
+   `instructions`). Call it bare for `SKILL.md` + the manifest, then pass a `path` to go deeper.
 
 ## The craft library (resources)
 

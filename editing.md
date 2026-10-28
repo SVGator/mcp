@@ -84,6 +84,34 @@ Non-negotiable authoring rules:
 - **Give every element a `title`** (a short human-readable name like `"Ball"`, `"Shadow"`) so it
   is identifiable in the editor and in `get_skeleton`.
 - Easing is per-keyframe (bezier); keyframe `keys` arrays are time-ordered.
+- **One `clipPath`/`mask` per container, inside the group that references it** — see below.
+
+### Clips and masks: one per container
+
+This is the structure that most often comes out wrong when a project is built through the API,
+because it looks perfectly reasonable: two `clipPath`s (or a clip and a mask) authored as direct
+siblings of the same container. It is **rejected** with reason `invalid_structure`.
+
+The canonical shape is the one the editor's own *Create clipping path* produces — the definition
+lives **inside** the group that references it:
+
+```
+g { compositing.clip.path: "X" }
+└── clipPath#X
+└── …content
+```
+
+Rules:
+
+- A `clipPath` or `mask` goes **inside** the group whose `compositing.clip.path` /
+  `compositing.mask.source` points at it.
+- A container may hold **at most one** of them — not two clips, not a clip plus a mask.
+- When one element needs **both** a clip and a mask, **nest two groups**: the outer carries the
+  mask, the inner carries the clip.
+
+The rule applies to every write: `edit_part` inserts and moves, and the whole-document
+`create_project` / `replace_project`. `describe_shape` repeats it under the `clipPath`, `mask` and
+`compositing` topics, so it is met wherever authoring starts.
 
 ## Verifying an edit
 
@@ -102,6 +130,14 @@ string; `preview="module"` additionally returns the animation payload (opt-in �
 | Build a new document you've assembled | `create_project` |
 | Clone or template a project | `create_project` |
 | Bulk-transform / redo a whole document | `replace_project` |
+| Start from a ready-made SVGator animation | `list_templates` → `duplicate_project`, then edit the copy |
+
+Authoring a good document from scratch is the hardest thing to ask of an assistant. When the brief
+is a common one — a loading spinner, an animated download icon — searching
+[`list_templates`](tools.md#list_templates) and duplicating a finished template is usually a better
+first move than `create_project`: the craft is already there, and the editing loop above then goes
+into adapting it (recolor, retime, cut what doesn't serve the piece). Templates are read-only, so
+the copy is what you edit.
 
 The coarse writes validate the **whole project as one unit** — a single wrong field fails the
 entire call (nothing is persisted), which is why `describe_shape`-first matters. Also note the
@@ -114,3 +150,14 @@ entire call (nothing is persisted), which is why `describe_shape`-first matters.
 The server is the validation authority. Invalid edits return a descriptive `422` naming exactly
 what's wrong (unknown field, bad enum value, malformed keyframe, …) — the intended workflow is:
 read the message, fix the payload, retry. Nothing is persisted on a rejected edit or replace.
+
+A few reasons worth recognizing:
+
+| `reason` | What it means |
+| --- | --- |
+| `invalid_structure` | The document breaks a structural rule — most often [two clips/masks in one container](#clips-and-masks-one-per-container), or a dotted `properties`/`animators` key |
+| `not_a_container` / `invalid_child` | The insert target holds no children at all, or not *that* child type (a `text` holds only `tspan`; a `tspan` lives only in a `text`) |
+| `invalid_value` | The value at `item` doesn't match the schema for that path |
+
+Writing to a **template** is refused outright — templates are read-only for every account.
+Duplicate it first (see [`list_templates`](tools.md#list_templates)) and edit the copy.
